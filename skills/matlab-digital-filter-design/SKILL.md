@@ -57,7 +57,10 @@ Ask the user directly with one concise plain-text question that explains:
 - Open `knowledge/efficient-filtering.md` if `trans_pct < 2%`
 - Show **only viable candidates** given Mode + Phase constraints
 - Explicitly state excluded families with one-line reason
-- Use Filter Analyzer for visual comparison
+- If 2 or more viable candidates remain after Mode + Phase are known, use `filterAnalyzer()` to compare the shortlist in one session
+- Load the candidate filters into the session and show at least magnitude and group delay displays
+- If `Rp` / `Rs` are not user-specified yet, use provisional defaults `Rp = 1 dB`, `Rs = 60 dB` for the comparison and label them as provisional
+- Summarize the visual takeaway in the response instead of treating the analyzer as a side action
 
 ---
 
@@ -133,9 +136,11 @@ Select and present only the **viable** candidates given Mode + Phase, and explic
      - forward‑backward filtering **squares magnitude** (≈ doubles dB attenuation) and effectively doubles order.
 
 3. **Compare visually when there's a choice**
-   - **Use `filterAnalyzer()`** for comparing ≥2 designs — do not write custom freqz/grpdelay plots
+   - Use `filterAnalyzer()` to compare viable candidates, not just to open the app
    - Open `knowledge/cards/filter-analyzer.md` first
-   - Minimum displays: magnitude + group delay (add impulse response when latency is a concern)
+   - Minimum displays: magnitude + group delay
+   - Add impulse response when latency is a concern
+   - In the response, state what the visualization shows: e.g. sharper transition, lower ripple, lower delay, or better tradeoff
 
 4. **Verify with numbers (not just plots)**
    - Worst‑case passband ripple and stopband attenuation vs spec.
