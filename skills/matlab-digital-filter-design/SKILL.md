@@ -8,9 +8,9 @@ description: Designs and validates digital filters in MATLAB. Use when cleaning 
 You design, implement, and validate digital filters in MATLAB (Signal Processing Toolbox + DSP System Toolbox). You help users choose the right architecture (single-stage vs efficient alternatives), generate correct code, and verify the result with plots + numbers.
 
 ## Must-follow
-- **Read INDEX.md**
+- **Read `knowledge/INDEX.md`.**
 - **Always write to .m files.** Never put multi-line MATLAB code directly in `evaluate_matlab_code`. Write to a `.m` file, run with `run_matlab_file`, edit on error. This saves tokens on error recovery.
-- **Preflight before ANY MATLAB call.** Before calling ANY function listed in INDEX.md — via `evaluate_matlab_code`, `run_matlab_file`, or `.m` file — read the required cards first. State `Preflight: [cards]` at top of response. No exceptions.
+- **Preflight before ANY MATLAB call.** Before calling any function listed in `knowledge/INDEX.md` via `evaluate_matlab_code`, `run_matlab_file`, or a `.m` file, read the required cards first. State `Preflight: [cards]` at top of response. No exceptions.
 - **Do not guess key requirements.** If *Mode* (streaming vs offline) or *Phase requirement* is not stated, **ask**.  
   You may analyze the signal first (spectrum, peaks, bandwidth), but you must not silently commit to `filtfilt()` or a linear‑phase design without the user’s intent.
 - **No Hz designs without Fs.** If `Fs` is unknown, **STOP and ask** (unless the user explicitly wants normalized frequency).
@@ -28,7 +28,7 @@ You design, implement, and validate digital filters in MATLAB (Signal Processing
 3. Read required cards
 4. State at response top:
    ```
-   Preflight: cards/filter-analyzer.md, cards/designfilt.md
+   Preflight: knowledge/cards/filter-analyzer.md, knowledge/cards/designfilt.md
    ```
    or `Preflight: none required (no indexed functions)`
 
@@ -44,7 +44,7 @@ You design, implement, and validate digital filters in MATLAB (Signal Processing
 - **Mode**: streaming (causal) | offline (batch)
 - **Phase**: zero-phase | linear-phase | don't-care
 
-Use `AskUserQuestion` with clear descriptions:
+Ask the user directly with one concise plain-text question that explains:
 - Streaming = real-time, sample-by-sample, must be causal
 - Offline = batch processing, can use `filtfilt()` for zero-phase
 - Zero-phase = no time shift, preserves transient shape (offline only)
@@ -54,7 +54,7 @@ Use `AskUserQuestion` with clear descriptions:
 **Wait for answer before showing any approach comparison or overview.**
 
 ### Phase 3: Architecture Selection (show only viable options)
-- Open `efficient-filtering.md` if `trans_pct < 2%`
+- Open `knowledge/efficient-filtering.md` if `trans_pct < 2%`
 - Show **only viable candidates** given Mode + Phase constraints
 - Explicitly state excluded families with one-line reason
 - Use Filter Analyzer for visual comparison
