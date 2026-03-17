@@ -7,16 +7,17 @@ Open this card **before** you write any code that uses:
 
 - Always pass `SampleRates=Fs` so plots are in **Hz** (not normalized).
 - `FilterNames` must be valid MATLAB identifiers:
-  - ✅ `["FIR_Equiripple","IIR_Ellip"]`
-  - ❌ `["FIR Equiripple","IIR-ellip"]`
+  - �?`["FIR_Equiripple","IIR_Ellip"]`
+  - �?`["FIR Equiripple","IIR-ellip"]`
 - Overlay rules:
   - frequency-domain overlays only with frequency-domain
   - time-domain overlays only with time-domain
+- Normalize candidate passband gain before comparison (especially multirate/IFIR cascades) so 0 dB references are apples-to-apples.
 - Avoid duplicate filters on re-runs:
   - prefer `newSession(fa)` (fresh start), or
   - `replaceFilters(fa, ...)` (update-in-place)
 
-## Canonical “compare two filters” pattern
+## Canonical “compare two filters�?pattern
 
 ```matlab
 Fs = 44100;
@@ -63,8 +64,7 @@ replaceFilters(fa, dA_new, dB_new, ...
     SampleRates=Fs);
 ```
 
-## Visualize a multirate pipeline as one “filter”
-
+## Visualize a multirate pipeline as one “filter�?
 When comparing a decimate→filter→interpolate pipeline against a single-stage filter, wrap the full chain in `dsp.FilterCascade`.
 
 ```matlab
@@ -82,7 +82,13 @@ core_sys = dsp.FIRFilter("Numerator", d_core.Numerator);
 
 interp_sys = designMultirateFIR(InterpolationFactor=M, StopbandAttenuation=60, SystemObject=true);
 
-pipe = dsp.FilterCascade(dec_sys, core_sys, interp_sys);
+pipe0 = dsp.FilterCascade(dec_sys, core_sys, interp_sys);
+
+% Normalize to ~0 dB at DC before adding to analyzer
+[H0, ~] = freqz(pipe0, 4096, Fs);
+g0 = abs(H0(1));
+core_norm = dsp.FIRFilter("Numerator", d_core.Numerator / g0);
+pipe = dsp.FilterCascade(dec_sys, core_norm, interp_sys);
 
 % Add alongside other filters
 addFilters(fa, pipe, FilterNames="Multirate_Pipeline", SampleRates=Fs);
@@ -92,6 +98,7 @@ addFilters(fa, pipe, FilterNames="Multirate_Pipeline", SampleRates=Fs);
 
 Open `knowledge/filter-analyzer.md` when you need:
 - `filterAnalysisOptions` (log scale, NFFT, normalization, etc.)
-- display management (`duplicateDisplays`, `deleteDisplays`, …)
+- display management (`duplicateDisplays`, `deleteDisplays`, �?
 - session save/load (`saveSession`)
 - version-specific notes
+

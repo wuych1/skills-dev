@@ -17,11 +17,14 @@ You design, implement, and validate digital filters in MATLAB (Signal Processing
 - **Always pin the sample rate.**
   - `designfilt(..., SampleRate=Fs)`
   - `freqz(d, [], Fs)` / `grpdelay(d, [], Fs)` (plot in **Hz**)
+- **Normalize candidate gain before comparison.** For multirate / IFIR / cascades, verify DC (or passband-center) gain and scale to ~0 dB before `filterAnalyzer()` and metric comparisons.
 - **IIR stability:** prefer **SOS/CTF** forms (avoid high‑order `[b,a]` polynomials).
+
+- **Filter Analyzer is user-visible.** In this MATLAB MCP setup, successful `filterAnalyzer(...)` calls appear in-chat; use them as a primary artifact when comparing filter candidates.
 
 ### MATLAB Code/Function Call Best Practise
 - Write code to a `.m` file first, then run with `run_matlab_file`
-- If errors occur, edit the file and rerun — don't put all code inline in tool calls
+- If errors occur, edit the file and rerun �?don't put all code inline in tool calls
 
 1. List MATLAB functions you'll call
 2. Check `knowledge/INDEX.md` for each (function-level + task-level tables)
@@ -57,10 +60,12 @@ Ask the user directly with one concise plain-text question that explains:
 - Open `knowledge/efficient-filtering.md` if `trans_pct < 2%`
 - Show **only viable candidates** given Mode + Phase constraints
 - Explicitly state excluded families with one-line reason
-- If 2 or more viable candidates remain after Mode + Phase are known, use `filterAnalyzer()` to compare the shortlist in one session
+- Hard gate: if 2 or more viable candidates remain after Mode + Phase are known, you **MUST** run `filterAnalyzer()` on the shortlist before any final recommendation.
 - Load the candidate filters into the session and show at least magnitude and group delay displays
 - If `Rp` / `Rs` are not user-specified yet, use provisional defaults `Rp = 1 dB`, `Rs = 60 dB` for the comparison and label them as provisional
 - Summarize the visual takeaway in the response instead of treating the analyzer as a side action
+- When using `filterAnalyzer()`, explicitly tell the user what to look for: passband ripple, transition steepness, stopband attenuation, and group delay.
+- Because analyzer output is user-visible in this environment, summarize the key visual findings and tie them to the recommendation.
 
 ---
 
@@ -75,7 +80,7 @@ Ask the user directly with one concise plain-text question that explains:
   - bandpass/bandstop: `Fpass1`, `Fstop1`, `Fpass2`, `Fstop2`
   - notch: center `F0` (+ bandwidth or Q)
 
-If any item is missing → **ask**.
+If any item is missing �?**ask**.
 
 ### Checklist B: Required intent for architecture choice (must ask if unknown)
 
@@ -86,8 +91,8 @@ If any item is missing → **ask**.
   - `Rs_dB` stopband attenuation (default **60 dB**)
   - for asymmetric band specs: allow `Rs1_dB`, `Rs2_dB`
 
-If Mode or Phase is unknown: ask **1–2** clarifying questions and stop.  
-Do **not** assume “offline” or “zero‑phase”.
+If Mode or Phase is unknown: ask **1�?** clarifying questions and stop.  
+Do **not** assume “offline�?or “zero‑phase�?
 
 ### Standard spec block (always include)
 
@@ -113,9 +118,9 @@ Compute these and state them before finalizing an approach:
 
 **Decision rule**
 
-- `trans_pct > 5%` → single‑stage FIR or IIR is usually fine
-- `2% ≤ trans_pct ≤ 5%` → single‑stage is possible; mention efficient alternatives if cost/latency matters
-- `trans_pct < 2%` → **STOP and do a narrow‑transition comparison**
+- `trans_pct > 5%` �?single‑stage FIR or IIR is usually fine
+- `2% �?trans_pct �?5%` �?single‑stage is possible; mention efficient alternatives if cost/latency matters
+- `trans_pct < 2%` �?**STOP and do a narrow‑transition comparison**
   Open `knowledge/cards/efficient-filtering.md`.
 
 **Important:** for `trans_pct < 2%`, do **not** blindly show all four families.  
@@ -127,20 +132,24 @@ Select and present only the **viable** candidates given Mode + Phase, and explic
 
 1. **Feasibility / order sanity check**
    - Default: let `designfilt` choose minimum order from `Rp/Rs`, then query `filtord(d)`.
-   - Optional (especially for narrow transitions): use `kaiserord` / `firpmord` to estimate FIR length for planning (not as “the truth”).
+   - Optional (especially for narrow transitions): use `kaiserord` / `firpmord` to estimate FIR length for planning (not as “the truth�?.
 
 2. **Design candidates**
    - Prefer `designfilt()` with explicit `Rp/Rs` and `SampleRate=Fs`.
    - Streaming IIR: prefer `SystemObject=true` (returns `dsp.SOSFilter`) for stable, stateful filtering.
    - Offline zero‑phase: `filtfilt()` is allowed, but you must state:
-     - forward‑backward filtering **squares magnitude** (≈ doubles dB attenuation) and effectively doubles order.
+     - forward‑backward filtering **squares magnitude** (�?doubles dB attenuation) and effectively doubles order.
 
 3. **Compare visually when there's a choice**
    - Use `filterAnalyzer()` to compare viable candidates, not just to open the app
    - Open `knowledge/cards/filter-analyzer.md` first
    - Minimum displays: magnitude + group delay
    - Add impulse response when latency is a concern
-   - In the response, state what the visualization shows: e.g. sharper transition, lower ripple, lower delay, or better tradeoff
+   - In the response, include this analyzer-takeaway checklist (based on what the user can see in `filterAnalyzer`):
+     - magnitude takeaway (which candidate is sharpest in transition region),
+     - group delay takeaway (latency/phase behavior differences),
+     - passband ripple + stopband attenuation callout (meets/misses target),
+     - one-line recommendation tied directly to those analyzer observations.
 
 4. **Verify with numbers (not just plots)**
    - Worst‑case passband ripple and stopband attenuation vs spec.
@@ -155,3 +164,4 @@ Select and present only the **viable** candidates given Mode + Phase, and explic
    - Implementation form (digitalFilter vs System object, SOS/CTF export)
 
 That’s the whole job: make the workflow predictable, and make the assumptions impossible to miss.
+

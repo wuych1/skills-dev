@@ -7,13 +7,13 @@ Use this card when the user wants:
 
 ## 80/20 rules
 
-- Streaming is **causal** ‚Üí no `filtfilt()`. (Zero-phase requires the entire signal.)
+- Streaming is **causal** ‚Ü?no `filtfilt()`. (Zero-phase requires the entire signal.)
 - Use **System objects** (`SystemObject=true`) so state is handled correctly across frames.
 - Frame length should be a multiple of the decimation factor `M`.
 
 **Note**: If you need zero-phase, switch to offline mode with `resample()`. See `cards/multirate-offline.md`.
 
-## Canonical streaming pipeline (dec ‚Üí sharp filter ‚Üí interp)
+## Canonical streaming pipeline (dec ‚Ü?sharp filter ‚Ü?interp)
 
 ```matlab
 Fs = 44100;
@@ -53,9 +53,32 @@ for k = 1:frameLen:(numel(x)-frameLen+1)
 end
 ```
 
+## Gain normalization (important for fair comparison)
+
+Multirate decimator/interpolator cascades can show passband gain offsets versus single-stage filters.
+Before comparing magnitude/SNR, normalize to ~0 dB in the passband.
+
+Use DC-gain normalization at the original sample rate:
+
+```matlab
+% Build unnormalized pipeline first
+pipe0 = dsp.FilterCascade(dec, sharp, interp);
+
+% Measure DC gain in Hz domain
+[H0, ~] = freqz(pipe0, 4096, Fs);
+g0 = abs(H0(1));
+
+% Preferred: fold normalization into FIR stage coefficients (portable)
+% (Avoid relying on dsp.Gain, which may be unavailable in some setups.)
+sharpNorm = dsp.FIRFilter("Numerator", sharp.Numerator / g0);
+pipe = dsp.FilterCascade(dec, sharpNorm, interp);
+```
+
+If stage coefficients are not easily editable, multiply the pipeline output by `1/g0`
+inside the frame loop and document the applied scalar.
 ## Efficiency note (common trap)
 
-For narrow transitions, don‚Äôt try to ‚Äúbake the sharp spec‚Äù into a multistage decimator/interpolator.  
+For narrow transitions, don‚Äôt try to ‚Äúbake the sharp spec‚Ä?into a multistage decimator/interpolator.  
 Instead:
 - decimate/interpolate with relaxed anti-alias / anti-image, and
 - do the sharp filtering at the reduced rate.
@@ -78,10 +101,10 @@ filterAnalyzer(pipe, FilterNames="Multirate_Pipeline", SampleRates=Fs);
 `designMultirateFIR` is the recommended modern API. Don't confuse it with raw System object constructors:
 
 ```matlab
-% WRONG ‚Äî invalid syntax (dsp.FIRDecimator doesn't take 'SystemObject')
+% WRONG ‚Ä?invalid syntax (dsp.FIRDecimator doesn't take 'SystemObject')
 decim = dsp.FIRDecimator(M, 'SystemObject', true);
 
-% RIGHT ‚Äî use designMultirateFIR
+% RIGHT ‚Ä?use designMultirateFIR
 decim = designMultirateFIR(DecimationFactor=M, StopbandAttenuation=60, SystemObject=true);
 ```
 
@@ -92,9 +115,10 @@ decim = designMultirateFIR(DecimationFactor=M, StopbandAttenuation=60, SystemObj
 `filtord()` works on `digitalFilter` objects but NOT on System objects:
 
 ```matlab
-% WRONG ‚Äî filtord doesn't work on dsp.FIRDecimator
+% WRONG ‚Ä?filtord doesn't work on dsp.FIRDecimator
 N = filtord(decim);  % ERROR
 
-% RIGHT ‚Äî use Numerator property
+% RIGHT ‚Ä?use Numerator property
 N = numel(decim.Numerator) - 1;
 ```
+
